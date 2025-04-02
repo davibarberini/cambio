@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Title will be set by JavaScript -->
+    <title>Currency Exchange Rates</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <style>
+      :root {
+        --bg-color: #f4f7f9;
+        --card-bg-color: #ffffff;
+        --primary-color: #0056b3;
+        --secondary-color: #495057;
+        --text-color: #333;
+        --border-color: #dee2e6;
+        --shadow-color: rgba(0, 0, 0, 0.1);
+        --font-family: "Poppins", sans-serif;
+        --active-btn-bg: #0056b3;
+        --active-btn-color: #ffffff;
+        --inactive-btn-bg: #e9ecef;
+        --inactive-btn-color: #495057;
+      }
+
+      /* ... (Reset styles *) ... */
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: var(--font-family);
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        line-height: 1.6;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 700px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 30px;
+        color: var(--primary-color);
+      }
+
+      header h1 {
+        font-weight: 600;
+        font-size: 2.2em;
+      }
+
+      .adsense-placeholder {
+        width: 100%;
+        max-width: 728px;
+        height: 90px;
+        background-color: #e9ecef;
+        border: 1px dashed var(--border-color);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 20px auto 30px;
+        color: var(--secondary-color);
+        font-size: 0.9em;
+        text-align: center;
+      }
+
+      .content-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+        margin-bottom: 30px;
+      }
+
+      .card {
+        background-color: var(--card-bg-color);
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 4px 12px var(--shadow-color);
+        border: 1px solid var(--border-color);
+        transition: box-shadow 0.2s ease-in-out;
+      }
+      .card:hover {
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+      }
+
+      .card h2 {
+        color: var(--primary-color);
+        margin-bottom: 15px;
+        font-size: 1.3em;
+        font-weight: 600;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 10px;
+        display: flex; /* Align title and selectors */
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap; /* Allow wrapping on small screens */
+        gap: 10px; /* Space between title and buttons */
+      }
+
+      .chart-selector {
+        display: flex;
+        gap: 8px;
+      }
+
+      .chart-selector-btn {
+        padding: 5px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        background-color: var(--inactive-btn-bg);
+        color: var(--inactive-btn-color);
+        cursor: pointer;
+        font-size: 0.9em;
+        font-weight: 600;
+        transition: background-color 0.2s, color 0.2s;
+      }
+
+      .chart-selector-btn:hover {
+        background-color: #dbe1e6; /* Slightly darker hover */
+      }
+
+      .chart-selector-btn.active {
+        background-color: var(--active-btn-bg);
+        color: var(--active-btn-color);
+        border-color: var(--active-btn-bg);
+      }
+
+      .rate-list {
+        list-style: none;
+      }
+      .rate-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        font-size: 1.1em;
+        border-bottom: 1px solid #eee;
+      }
+      .rate-list li:last-child {
+        border-bottom: none;
+      }
+      .rate-list .currency-pair {
+        font-weight: 400;
+        color: var(--secondary-color);
+      }
+      .rate-list .currency-pair strong {
+        font-weight: 600;
+        color: var(--text-color);
+      }
+      .rate-list .value {
+        font-weight: 600;
+        color: var(--primary-color);
+        font-size: 1.15em;
+      }
+
+      .loading,
+      .error {
+        text-align: center;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 10px;
+      }
+      .loading {
+        color: var(--primary-color);
+        background-color: #e7f0fd;
+      }
+      .error {
+        color: #dc3545;
+        background-color: #f8d7da;
+      }
+
+      #exchangeChart {
+        width: 100%;
+        max-height: 350px;
+      }
+
+      footer {
+        text-align: center;
+        margin-top: 30px;
+        padding-top: 15px;
+        border-top: 1px solid var(--border-color);
+        color: var(--secondary-color);
+        font-size: 0.9em;
+        width: 100%;
+        max-width: 700px;
+      }
+      footer p {
+        margin-bottom: 5px;
+      }
+      footer a {
+        color: var(--primary-color);
+        text-decoration: none;
+      }
+      footer a:hover {
+        text-decoration: underline;
+      }
+
+      /* ... (Responsive Adjustments) ... */
+      @media (max-width: 480px) {
+        header h1 {
+          font-size: 1.8em;
+        }
+        .card h2 {
+          font-size: 1.1em;
+          flex-direction: column;
+          align-items: flex-start;
+        } /* Stack title and buttons */
+        .rate-list li {
+          font-size: 1em;
+        }
+        .rate-list .value {
+          font-size: 1.05em;
+        }
+        .chart-selector-btn {
+          padding: 4px 10px;
+          font-size: 0.85em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1 id="page-title">Live Currency Exchange Rates</h1>
+      </header>
+
+      <div class="adsense-placeholder">
+        <!-- Replace this div with your actual Google AdSense code -->
+        Ad Placeholder (e.g., 728x90)
+      </div>
+
+      <main class="content-wrapper">
+        <!-- Key Rates Card -->
+        <div class="card">
+          <h2 id="rates-card-title">Key Exchange Rates</h2>
+          <div id="rates-loading" class="loading">Loading rates...</div>
+          <div id="rates-error" class="error" style="display: none"></div>
+          <ul id="rates-list" class="rate-list" style="display: none"></ul>
+        </div>
+
+        <!-- Historical Chart Card -->
+        <div class="card" id="chart-container">
+          <!-- Title and Selector Buttons Wrapper -->
+          <h2 id="chart-card-title-wrapper">
+            <span id="chart-card-title">Trend - Last 30 Days</span>
+            <!-- Title Span -->
+            <div class="chart-selector">
+              <!-- Button Group -->
+              <button
+                id="btn-chart-eur"
+                class="chart-selector-btn"
+                data-currency="EUR"
+              >
+                EUR / BRL
+              </button>
+              <button
+                id="btn-chart-usd"
+                class="chart-selector-btn"
+                data-currency="USD"
+              >
+                USD / BRL
+              </button>
+            </div>
+          </h2>
+          <div id="chart-loading" class="loading">Loading chart data...</div>
+          <div id="chart-error" class="error" style="display: none"></div>
+          <canvas id="exchangeChart"></canvas>
+        </div>
+      </main>
+
+      <footer>
+        <p id="last-updated">Fetching latest data...</p>
+        <p>
+          <span id="footer-rates-source">Rates provided by</span>
+          <a
+            href="https://frankfurter.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            >frankfurter.app</a
+          >.
+        </p>
+        <p>
+          <span id="footer-chart-source">Chart rendered using</span>
+          <a
+            href="https://www.chartjs.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Chart.js</a
+          >.
+        </p>
+      </footer>
+    </div>
+
+    <script>
+      // --- Configuration ---
+      const API_BASE_URL = "https://api.frankfurter.app";
+      const CHART_TARGET_CURRENCY = "BRL"; // Chart always compares against BRL
+
+      // --- DOM Elements ---
+      const pageTitleElement = document.getElementById("page-title");
+      const ratesCardTitleElement = document.getElementById("rates-card-title");
+      const ratesList = document.getElementById("rates-list");
+      const ratesLoading = document.getElementById("rates-loading");
+      const ratesError = document.getElementById("rates-error");
+      // Chart specific
+      const chartCardTitleElement = document.getElementById("chart-card-title");
+      const chartCanvas = document.getElementById("exchangeChart");
+      const chartLoading = document.getElementById("chart-loading");
+      const chartError = document.getElementById("chart-error");
+      const chartSelectorButtons = document.querySelectorAll(
+        ".chart-selector-btn"
+      );
+      const btnChartEur = document.getElementById("btn-chart-eur");
+      const btnChartUsd = document.getElementById("btn-chart-usd");
+      // Footer & Meta
+      const lastUpdatedElement = document.getElementById("last-updated");
+      const footerRatesSourceElement = document.getElementById(
+        "footer-rates-source"
+      );
+      const footerChartSourceElement = document.getElementById(
+        "footer-chart-source"
+      );
+      const documentTitleElement = document.querySelector("title");
+
+      let exchangeChart = null; // Chart instance
+      let currentChartBaseCurrency = "EUR"; // Default chart base currency
+
+      // --- Language Handling ---
+      const uiText = {
+        en: {
+          pageTitle: "Live Currency Exchange Rates",
+          docTitle: "Currency Exchange Rates - EUR/USD/BRL Focus",
+          ratesCardTitle: "Key Exchange Rates",
+          chartCardTitleBase: "Trend - Last 30 Days", // Base title, pair added dynamically
+          loadingRates: "Loading rates...",
+          loadingChart: "Loading chart data...",
+          errorLoadingRates: "Could not fetch rates.",
+          errorLoadingChart: "Could not load chart data.",
+          lastUpdatedPrefix: "Rates last updated:",
+          fetchingData: "Fetching latest data...",
+          footerRatesSource: "Rates provided by",
+          footerChartSource: "Chart rendered using",
+          chartXAxisLabel: "Date",
+          // Dynamic Y-Axis and Tooltip Labels (generated in code)
+        },
+        pt: {
+          // Portuguese (Brazil)
+          pageTitle: "Cotações de Moeda Ao Vivo",
+          docTitle: "Cotações - Foco EUR/USD/BRL",
+          ratesCardTitle: "Principais Cotações",
+          chartCardTitleBase: "Tendência - Últimos 30 Dias",
+          loadingRates: "Carregando cotações...",
+          loadingChart: "Carregando dados do gráfico...",
+          errorLoadingRates: "Não foi possível buscar as cotações.",
+          errorLoadingChart: "Não foi possível carregar os dados do gráfico.",
+          lastUpdatedPrefix: "Cotações atualizadas em:",
+          fetchingData: "Buscando dados...",
+          footerRatesSource: "Cotações fornecidas por",
+          footerChartSource: "Gráfico renderizado com",
+          chartXAxisLabel: "Data",
+          // Dynamic Y-Axis and Tooltip Labels (generated in code)
+        },
+      };
+
+      let currentLang = "en";
+
+      function setLanguage() {
+        const browserLang = navigator.language || navigator.userLanguage;
+        currentLang = browserLang && browserLang.startsWith("pt") ? "pt" : "en";
+
+        const texts = uiText[currentLang];
+        document.documentElement.lang = currentLang === "pt" ? "pt-BR" : "en";
+        documentTitleElement.textContent = texts.docTitle;
+        pageTitleElement.textContent = texts.pageTitle;
+        ratesCardTitleElement.textContent = texts.ratesCardTitle;
+        // Chart title is set dynamically after fetching
+        ratesLoading.textContent = texts.loadingRates;
+        chartLoading.textContent = texts.loadingChart;
+        lastUpdatedElement.textContent = texts.fetchingData;
+        footerRatesSourceElement.textContent = texts.footerRatesSource;
+        footerChartSourceElement.textContent = texts.footerChartSource;
+
+        // Update button text if needed (optional, as EUR/USD/BRL are common)
+        // btnChartEur.textContent = `EUR / ${CHART_TARGET_CURRENCY}`;
+        // btnChartUsd.textContent = `USD / ${CHART_TARGET_CURRENCY}`;
+
+        // Update existing error messages
+        if (ratesError.style.display !== "none") {
+          ratesError.textContent = `${texts.errorLoadingRates} ${
+            ratesError.dataset.detail || ""
+          }`;
+        }
+        if (chartError.style.display !== "none") {
+          chartError.textContent = `${texts.errorLoadingChart} ${
+            chartError.dataset.detail || ""
+          }`;
+        }
+
+        // Ensure the correct chart button is marked active visually
+        updateActiveButton();
+        // Update chart labels if chart exists
+        if (exchangeChart) {
+          updateChartLabels();
+          exchangeChart.update();
+        }
+        // Set initial chart card title text
+        setChartCardTitle(currentChartBaseCurrency);
+      }
+
+      function setChartCardTitle(baseCurrency) {
+        const texts = uiText[currentLang];
+        // Example: "Trend - Last 30 Days (EUR/BRL)" or "Tendência - Últimos 30 Dias (EUR/BRL)"
+        chartCardTitleElement.textContent = `${texts.chartCardTitleBase} (${baseCurrency}/${CHART_TARGET_CURRENCY})`;
+      }
+
+      // --- Helper Functions ---
+      function formatDate(date) {
+        return date.toISOString().split("T")[0];
+      }
+
+      function displayError(element, baseMessageKey, detailMessage = "") {
+        const baseMessage = uiText[currentLang][baseMessageKey] || "Error";
+        element.textContent = `${baseMessage} ${detailMessage}`;
+        element.dataset.detail = detailMessage;
+        element.style.display = "block";
+      }
+
+      function updateLastUpdated(timestamp) {
+        const date = new Date(timestamp);
+        const prefix = uiText[currentLang].lastUpdatedPrefix;
+        lastUpdatedElement.textContent = `${prefix} ${date.toLocaleString(
+          currentLang === "pt" ? "pt-BR" : "en-US"
+        )}`; // Use locale formatting
+      }
+
+      function updateActiveButton() {
+        chartSelectorButtons.forEach((button) => {
+          if (button.dataset.currency === currentChartBaseCurrency) {
+            button.classList.add("active");
+          } else {
+            button.classList.remove("active");
+          }
+        });
+      }
+
+      // --- Fetching and Displaying Focused Rates ---
+      async function fetchFocusedRates() {
+        ratesLoading.style.display = "block";
+        ratesError.style.display = "none";
+        ratesError.dataset.detail = "";
+        ratesList.style.display = "none";
+        ratesList.innerHTML = "";
+
+        const eurUrl = `${API_BASE_URL}/latest?from=EUR&to=BRL`;
+        const usdUrl = `${API_BASE_URL}/latest?from=USD&to=BRL`;
+
+        try {
+          const [eurResponse, usdResponse] = await Promise.all([
+            fetch(eurUrl),
+            fetch(usdUrl),
+          ]);
+          if (!eurResponse.ok || !usdResponse.ok)
+            throw new Error(
+              `HTTP error! EUR:${eurResponse.status}, USD:${usdResponse.status}`
+            );
+
+          const eurData = await eurResponse.json();
+          const usdData = await usdResponse.json();
+          if (!eurData.rates?.BRL || !usdData.rates?.BRL)
+            throw new Error("Incomplete rates data.");
+
+          const ratesToShow = {
+            "EUR/BRL": eurData.rates.BRL,
+            "USD/BRL": usdData.rates.BRL,
+          };
+          Object.entries(ratesToShow).forEach(([pair, rate]) => {
+            const [base, target] = pair.split("/");
+            const li = document.createElement("li");
+            li.innerHTML = `<span class="currency-pair"><strong>1 ${base}</strong> =</span> <span class="value">${rate.toFixed(
+              4
+            )} ${target}</span>`;
+            ratesList.appendChild(li);
+          });
+
+          ratesLoading.style.display = "none";
+          ratesList.style.display = "block";
+          const latestDate =
+            eurData.date > usdData.date ? eurData.date : usdData.date;
+          updateLastUpdated(new Date(latestDate));
+        } catch (error) {
+          console.error("Error fetching focused rates:", error);
+          displayError(ratesError, "errorLoadingRates", error.message);
+          ratesLoading.style.display = "none";
+        }
+      }
+
+      // --- Fetching Historical Data (Now accepts base currency) ---
+      async function fetchHistoricalData(baseCurrency) {
+        chartLoading.style.display = "block";
+        chartError.style.display = "none";
+        chartError.dataset.detail = "";
+        chartCanvas.style.display = "none"; // Hide canvas while loading
+
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - 30);
+        const formattedStartDate = formatDate(startDate);
+        const formattedEndDate = formatDate(endDate);
+
+        const url = `${API_BASE_URL}/${formattedStartDate}..${formattedEndDate}?from=${baseCurrency}&to=${CHART_TARGET_CURRENCY}`;
+
+        try {
+          const response = await fetch(url);
+          if (!response.ok)
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          const data = await response.json();
+          if (!data.rates || Object.keys(data.rates).length === 0)
+            throw new Error("No historical data received.");
+
+          const sortedDates = Object.keys(data.rates).sort();
+          const labels = sortedDates;
+          const chartData = sortedDates.map(
+            (date) => data.rates[date][CHART_TARGET_CURRENCY]
+          );
+
+          renderChart(labels, chartData, baseCurrency); // Pass base currency
+          chartLoading.style.display = "none";
+          chartCanvas.style.display = "block"; // Show canvas again
+          setChartCardTitle(baseCurrency); // Update title after data loaded
+        } catch (error) {
+          console.error(
+            `Error fetching historical data for ${baseCurrency}:`,
+            error
+          );
+          displayError(chartError, "errorLoadingChart", error.message);
+          chartLoading.style.display = "none";
+          chartCanvas.style.display = "none"; // Keep canvas hidden on error
+        }
+      }
+
+      // --- Dynamically update chart labels based on language and currency ---
+      function updateChartLabels() {
+        if (!exchangeChart) return;
+        const texts = uiText[currentLang];
+        const base = currentChartBaseCurrency;
+        const target = CHART_TARGET_CURRENCY;
+
+        // Generate labels dynamically
+        const yAxisLabel =
+          currentLang === "pt"
+            ? `1 ${base} em ${target}`
+            : `1 ${base} in ${target}`;
+        const tooltipLabel =
+          currentLang === "pt"
+            ? `Taxa de Câmbio ${base}/${target}`
+            : `${base}/${target} Exchange Rate`;
+
+        exchangeChart.options.scales.x.title.text = texts.chartXAxisLabel;
+        exchangeChart.options.scales.y.title.text = yAxisLabel;
+        exchangeChart.data.datasets[0].label = tooltipLabel;
+      }
+
+      // --- Rendering the Chart (Now accepts base currency) ---
+      function renderChart(labels, data, baseCurrency) {
+        const ctx = chartCanvas.getContext("2d");
+
+        if (exchangeChart) {
+          exchangeChart.destroy();
+        } // Destroy previous instance
+
+        exchangeChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                // Label set dynamically by updateChartLabels
+                data: data,
+                borderColor: "var(--primary-color)",
+                backgroundColor: "rgba(0, 86, 179, 0.1)",
+                borderWidth: 2,
+                tension: 0.1,
+                pointRadius: 1,
+                pointHoverRadius: 5,
+              },
+            ],
+          },
+          options: {
+            // Options object remains largely the same
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                title: { display: true /* text set by updateChartLabels*/ },
+                ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 10 },
+              },
+              y: {
+                title: { display: true /* text set by updateChartLabels */ },
+                ticks: { callback: (value) => value.toFixed(3) },
+              },
+            },
+            plugins: {
+              tooltip: {
+                mode: "index",
+                intersect: false,
+                callbacks: {
+                  label: (context) => {
+                    let l = context.dataset.label || "";
+                    if (l) {
+                      l += ": ";
+                    }
+                    if (context.parsed.y !== null) {
+                      l += context.parsed.y.toFixed(4);
+                    }
+                    return l;
+                  },
+                },
+              },
+              legend: { display: false },
+            },
+            interaction: { mode: "nearest", axis: "x", intersect: false },
+          },
+        });
+        // Update labels after creating the chart
+        updateChartLabels();
+        exchangeChart.update(); // Ensure labels are applied
+      }
+
+      // --- Event Listeners ---
+      chartSelectorButtons.forEach((button) => {
+        button.addEventListener("click", (event) => {
+          const selectedCurrency = event.target.dataset.currency;
+          if (
+            selectedCurrency &&
+            selectedCurrency !== currentChartBaseCurrency
+          ) {
+            currentChartBaseCurrency = selectedCurrency;
+            updateActiveButton(); // Visually update button state immediately
+            fetchHistoricalData(currentChartBaseCurrency); // Fetch new data and re-render
+          }
+        });
+      });
+
+      // --- Initial Load ---
+      document.addEventListener("DOMContentLoaded", () => {
+        setLanguage(); // Detect language, set UI texts, set active button
+        fetchFocusedRates(); // Fetch EUR/BRL, USD/BRL latest rates
+        fetchHistoricalData(currentChartBaseCurrency); // Fetch initial chart data (EUR/BRL)
+
+        // Optional: Auto-refresh (use cautiously)
+        // setInterval(fetchFocusedRates, 600000); // Refresh latest rates every 10 min
+      });
+    </script>
+  </body>
+</html>
